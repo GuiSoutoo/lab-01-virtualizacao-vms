@@ -74,14 +74,27 @@ Montar um ambiente de máquinas virtuais para praticar suporte técnico sem risc
   VBoxManage setextradata "Win11-Lab" "VBoxInternal2/EfiGraphicsResolution" "1920x1080"
   ```
 
+### 4. Disco do computador cheio e VM inacessível
+
+- **Sintoma:** a VM suspendeu sozinha com o erro `DrvVD_DISKFULL` ("Host system reported disk full"). Depois, ao apagar os snapshots, a VM passou a aparecer como **Inacessível** no VirtualBox, com o erro `Couldn't find end of Start Tag GuestProperty`.
+- **Diagnóstico:** a pasta da VM ocupava cerca de 56 GB no disco C: (disco base, discos diferenciais dos snapshots e estado salvo). O arquivo de configuração `Win11-Lab.vbox` estava truncado (poucos KB), enquanto o `Win11-Lab.vbox-prev` estava íntegro.
+- **Causa:** o disco C: encheu, o VirtualBox não conseguiu gravar o arquivo de configuração por inteiro e ele ficou corrompido.
+- **Solução:**
+  1. Liberei espaço no C: (instaladores antigos, temporários, SDK do Android) até ter mais de 20 GB livres.
+  2. Copiei `Win11-Lab.vbox` e `Win11-Lab.vbox-prev` para outro disco como backup.
+  3. Renomeei o arquivo quebrado para `Win11-Lab.vbox.quebrado` e usei a cópia do `.vbox-prev` como `Win11-Lab.vbox`.
+  4. No VirtualBox, removi a VM da lista com "Apenas remover" (sem excluir arquivos) e a adicionei de novo por Máquina, Adicionar.
+- **Prevenção:** manter pelo menos 15 a 20 GB livres no disco, evitar acumular snapshots e fazer backup do arquivo `.vbox`.
+
 ## O que aprendi
 
 - O Windows 11 exige UEFI, TPM 2.0 e Secure Boot, e isso precisa estar configurado na VM antes da instalação.
 - A criptografia de dispositivo do Windows ativa sozinha com conta Microsoft, e a chave de recuperação fica na conta.
 - Tirar snapshots antes de mexer em configurações permite voltar atrás sem refazer a instalação.
 - Diagnosticar por eliminação (ISO, ordem de boot, vídeo) é mais rápido do que refazer tudo.
+- Disco cheio pode corromper a configuração da VM. O VirtualBox guarda uma cópia (`.vbox-prev`) que permite recuperar sem perder o sistema.
+- Snapshots são discos diferenciais e ocupam muito espaço. Convém manter poucos.
 
 ## Próximos passos
 
-- Laboratório 2: acesso remoto com RDP, AnyDesk e TeamViewer entre o computador e a VM.
-- Trocar a rede das VMs para Bridge para as duas se enxergarem.
+- Laboratório 2: acesso remoto entre o computador e a VM (veja a pasta `lab-02-acesso-remoto`).
